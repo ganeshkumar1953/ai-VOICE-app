@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Kinship Voice",
+  "description": "A warm, neighborhood-style voice assistant that feels like talking to a family member. Includes real-time audio, complex thinking, and search-grounded knowledge.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
