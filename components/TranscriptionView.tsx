@@ -17,16 +17,11 @@ const TranscriptionView: React.FC = () => {
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-
+      mediaRecorder.ondataavailable = (event) => audioChunksRef.current.push(event.data);
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         await handleTranscription(audioBlob);
       };
-
       mediaRecorder.start();
       setIsRecording(true);
     } catch (err) {
@@ -46,43 +41,35 @@ const TranscriptionView: React.FC = () => {
     try {
       const arrayBuffer = await blob.arrayBuffer();
       const base64Audio = encodeBase64(new Uint8Array(arrayBuffer));
-      
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: [
-          {
-            inlineData: {
-              data: base64Audio,
-              mimeType: 'audio/webm',
-            },
-          },
-          { text: "Transcribe the audio accurately. Detect the language and maintain punctuation." },
+          { inlineData: { data: base64Audio, mimeType: 'audio/webm' } },
+          { text: "Accurately transcribe this neighborly note. If the audio is in Telugu, transcribe it accurately in Telugu script. Capture the warmth and local dialect of Andhra/Telangana." },
         ],
       });
-
-      setTranscription(response.text || 'No speech detected.');
+      setTranscription(response.text || 'ఏమీ వినబడలేదు. (Nothing heard.)');
     } catch (error) {
-      console.error('Transcription error:', error);
-      setTranscription('Error during transcription.');
+      setTranscription('మళ్ళీ చెప్పండి, సరిగా వినబడలేదు. (Let\'s try again.)');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center p-8 bg-white rounded-3xl shadow-xl w-full max-w-2xl mx-auto border border-green-50">
+    <div className="flex flex-col items-center p-10 bg-white/80 backdrop-blur-sm rounded-[2.5rem] shadow-xl w-full max-w-2xl mx-auto border border-orange-100/50">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-800">Neighbor's Scribe</h2>
-        <p className="text-gray-500">Record a note and let me write it down for you.</p>
+        <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Ledger (నోట్ బుక్)</h2>
+        <p className="text-gray-500 text-sm italic">Dictate your notes or messages - Guru will write them down.</p>
       </div>
 
       <div className="flex flex-col items-center space-y-6 w-full">
         <button
           onClick={isRecording ? stopRecording : startRecording}
-          className={`w-24 h-24 rounded-full flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 shadow-lg ${
-            isRecording ? 'bg-red-500 animate-pulse' : 'bg-green-500'
-          } text-white`}
+          className={`w-24 h-24 rounded-full flex items-center justify-center transition-all transform hover:scale-110 active:scale-95 shadow-lg ${
+            isRecording ? 'bg-orange-100 text-orange-500 animate-pulse border-2 border-orange-400' : 'bg-orange-500 text-white'
+          }`}
         >
           {isRecording ? (
             <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd"/></svg>
@@ -91,23 +78,24 @@ const TranscriptionView: React.FC = () => {
           )}
         </button>
 
-        <p className="text-sm font-medium text-gray-400">
-          {isRecording ? 'Listening carefully...' : 'Tap to start recording'}
+        <p className="text-xs font-bold uppercase tracking-widest text-orange-400">
+          {isRecording ? 'వినబడుతోంది... (Listening...)' : 'నొక్కండి (Record)'}
         </p>
 
         <div className="w-full mt-4">
-          <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Transcription Output</label>
-          <div className="min-h-[150px] w-full bg-gray-50 rounded-2xl p-6 border border-gray-100 text-gray-700 whitespace-pre-wrap relative">
+          <div className="min-h-[200px] w-full bg-[#fffdfa] rounded-3xl p-8 border border-orange-100/50 text-gray-700 leading-relaxed relative shadow-inner">
             {loading ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-50/80 rounded-2xl">
-                <div className="flex space-x-1">
-                   <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce"></div>
-                   <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce delay-75"></div>
-                   <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce delay-150"></div>
+              <div className="absolute inset-0 flex items-center justify-center bg-white/60 rounded-3xl">
+                <div className="flex space-x-1.5">
+                   <div className="w-2.5 h-2.5 bg-orange-400 rounded-full animate-bounce"></div>
+                   <div className="w-2.5 h-2.5 bg-orange-400 rounded-full animate-bounce delay-75"></div>
+                   <div className="w-2.5 h-2.5 bg-orange-400 rounded-full animate-bounce delay-150"></div>
                 </div>
               </div>
             ) : null}
-            {transcription || 'Speak into the microphone to see the transcription...'}
+            <p className={`text-sm ${!transcription ? 'text-gray-300 italic' : 'text-gray-700'}`}>
+              {transcription || 'మీ మాటలు ఇక్కడ కనిపిస్తాయి (Your note will appear here)...'}
+            </p>
           </div>
         </div>
       </div>
